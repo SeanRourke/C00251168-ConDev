@@ -1,3 +1,6 @@
+# instructions for running
+# navigate to folder containing file, run command python3 lab.py
+
 def get_value(r):
     if r == 'I':
         return 1
