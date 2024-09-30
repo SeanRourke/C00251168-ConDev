@@ -1,3 +1,4 @@
+# Seán Rourke
 # instructions for running
 # navigate to folder containing file, run command python3 lab.py
 
