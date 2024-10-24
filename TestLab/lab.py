@@ -1,6 +1,5 @@
 # Seán Rourke
-# instructions for running
-# navigate to folder containing file, run command python3 lab.py
+# C0025168
 
 def get_value(r):
     if r == 'I':
