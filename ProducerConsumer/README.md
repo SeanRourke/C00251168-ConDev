@@ -1,6 +1,6 @@
 ## Description
 
-##### Barrier that makes sure all parts of A runs before any part of B runs.
+##### Demonstration of the producer consumer problem. Producers produce, consumers consume. 
 
 ## Instructions
 
