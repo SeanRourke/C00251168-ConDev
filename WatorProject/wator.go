@@ -16,10 +16,10 @@ const (
 	GridSize          = 50
 	CellSize          = ScreenWidth / GridSize
 	InitialFishCount  = 100
-	InitialSharkCount = 50
-	FishBreedTime     = 5
+	InitialSharkCount = 20
+	FishBreedTime     = 4
 	SharkBreedTime    = 8
-	SharkStarveTime   = 5
+	SharkStarveTime   = 4
 )
 
 type CellType int
