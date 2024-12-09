@@ -15,11 +15,13 @@ const (
 	ScreenHeight      = 500
 	GridSize          = 50
 	CellSize          = ScreenWidth / GridSize
-	InitialFishCount  = 100
-	InitialSharkCount = 20
+	InitialFishCount  = 200
+	InitialSharkCount = 50
+	FishBreedTime     = 5
+	SharkBreedTime    = 8
+	SharkStarveTime   = 5
 )
 
-// EntityType Enum
 type CellType int
 
 const (
@@ -28,13 +30,10 @@ const (
 	Shark
 )
 
-// Entity struct to represent fish and sharks with their breeding and starving times
 type Entity struct {
 	Type          CellType
 	BreedCounter  int
 	StarveCounter int
-	BreedTime     int
-	StarveTime    int
 }
 
 type Grid [][]*Entity
@@ -50,24 +49,20 @@ func initializeGrid() Grid {
 		grid[i] = make([]*Entity, GridSize)
 	}
 
-	placeEntities(grid, Fish, InitialFishCount, 5, 0)   // Fish breed every 5 steps
-	placeEntities(grid, Shark, InitialSharkCount, 8, 5) // Sharks breed every 8 steps and starve after 5
+	placeEntities(grid, Fish, InitialFishCount)
+	placeEntities(grid, Shark, InitialSharkCount)
 
 	return grid
 }
 
 // randomly place entities on grid
-func placeEntities(grid Grid, entityType CellType, count int, breedTime, starveTime int) {
+func placeEntities(grid Grid, entityType CellType, count int) {
 	for i := 0; i < count; {
 		x, y := rand.Intn(GridSize), rand.Intn(GridSize)
 		if grid[x][y] == nil {
-			entity := &Entity{
-				Type:       entityType,
-				BreedTime:  breedTime,
-				StarveTime: starveTime,
-			}
+			entity := &Entity{Type: entityType}
 			if entityType == Shark {
-				entity.StarveCounter = starveTime
+				entity.StarveCounter = SharkStarveTime
 			}
 			grid[x][y] = entity
 			i++
@@ -80,6 +75,7 @@ func moveFish(grid, newGrid Grid, x, y int) {
 	cell := grid[x][y]
 	cell.BreedCounter++
 
+	// Find empty neighbors
 	neighbours := getNeighbours(x, y)
 	emptyCells := filterEmptyCells(grid, neighbours)
 
@@ -94,9 +90,11 @@ func moveFish(grid, newGrid Grid, x, y int) {
 	}
 
 	// Breed fish
-	if cell.BreedCounter >= cell.BreedTime {
+	if cell.BreedCounter >= FishBreedTime {
 		cell.BreedCounter = 0
-		newGrid[x][y] = &Entity{Type: Fish, BreedTime: 5} // New fish has its own breed time
+		if newGrid[x][y] == nil {
+			newGrid[x][y] = &Entity{Type: Fish}
+		}
 	}
 }
 
@@ -115,27 +113,31 @@ func moveShark(grid, newGrid Grid, x, y int) {
 		randomCell := fishCells[rand.Intn(len(fishCells))]
 		newX, newY := randomCell[0], randomCell[1]
 		newGrid[newX][newY] = cell
-		cell.StarveCounter = cell.StarveTime
+		cell.StarveCounter = SharkStarveTime
 	} else if len(emptyCells) > 0 {
 		// Move to an empty cell
 		randomCell := emptyCells[rand.Intn(len(emptyCells))]
 		newX, newY := randomCell[0], randomCell[1]
 		newGrid[newX][newY] = cell
+		// Starve shark
+		if cell.StarveCounter <= 0 {
+			newGrid[newX][newY] = nil
+		}
 	} else {
 		// Stay in place
 		newGrid[x][y] = cell
-	}
-
-	// Starve shark
-	if cell.StarveCounter <= 0 {
-		newGrid[x][y] = nil
-		return
+		// Starve shark
+		if cell.StarveCounter <= 0 {
+			newGrid[x][y] = nil
+		}
 	}
 
 	// Breed shark
-	if cell.BreedCounter >= cell.BreedTime {
+	if cell.BreedCounter >= SharkBreedTime {
 		cell.BreedCounter = 0
-		newGrid[x][y] = &Entity{Type: Shark, BreedTime: 8, StarveTime: 5} // New shark has its own breed and starve times
+		if newGrid[x][y] == nil {
+			newGrid[x][y] = &Entity{Type: Shark, StarveCounter: SharkStarveTime}
+		}
 	}
 }
 
