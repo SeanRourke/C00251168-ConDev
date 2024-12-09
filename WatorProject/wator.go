@@ -1,4 +1,5 @@
-package main
+// Wator simulation project by Seán Rourke
+package Main
 
 import (
 	"encoding/csv"
@@ -48,21 +49,21 @@ type Game struct {
 	numThreads int
 }
 
-// initialize the grid with fish and sharks
-func initializeGrid() Grid {
+// Initialize the grid with fish and sharks
+func InitialiseGrid() Grid {
 	grid := make(Grid, GridSize)
 	for i := range grid {
 		grid[i] = make([]*Entity, GridSize)
 	}
 
-	placeEntities(grid, Fish, InitialFishCount)
-	placeEntities(grid, Shark, InitialSharkCount)
+	PlaceEntities(grid, Fish, InitialFishCount)
+	PlaceEntities(grid, Shark, InitialSharkCount)
 
 	return grid
 }
 
-// randomly place entities on grid
-func placeEntities(grid Grid, entityType CellType, count int) {
+// Randomly place entities on grid
+func PlaceEntities(grid Grid, entityType CellType, count int) {
 	for i := 0; i < count; {
 		x, y := rand.Intn(GridSize), rand.Intn(GridSize)
 		if grid[x][y] == nil {
@@ -77,13 +78,13 @@ func placeEntities(grid Grid, entityType CellType, count int) {
 }
 
 // Move fish
-func moveFish(grid, newGrid Grid, x, y int) {
+func MoveFish(grid, newGrid Grid, x, y int) {
 	cell := grid[x][y]
 	cell.BreedCounter++
 
 	// Find empty neighbors
-	neighbours := getNeighbours(x, y)
-	emptyCells := filterEmptyCells(grid, neighbours)
+	neighbours := GetNeighbours(x, y)
+	emptyCells := FilterEmptyCells(grid, neighbours)
 
 	if len(emptyCells) > 0 {
 		// Move to a random empty cell
@@ -105,14 +106,14 @@ func moveFish(grid, newGrid Grid, x, y int) {
 }
 
 // Move shark
-func moveShark(grid, newGrid Grid, x, y int) {
+func MoveShark(grid, newGrid Grid, x, y int) {
 	cell := grid[x][y]
 	cell.BreedCounter++
 	cell.StarveCounter--
 
-	neighbours := getNeighbours(x, y)
-	fishCells := filterFishCells(grid, neighbours)
-	emptyCells := filterEmptyCells(grid, neighbours)
+	neighbours := GetNeighbours(x, y)
+	fishCells := FilterFishCells(grid, neighbours)
+	emptyCells := FilterEmptyCells(grid, neighbours)
 
 	if len(fishCells) > 0 {
 		// Eat fish
@@ -147,8 +148,8 @@ func moveShark(grid, newGrid Grid, x, y int) {
 	}
 }
 
-// get neighbours
-func getNeighbours(x, y int) [][2]int {
+// Get neighbours
+func GetNeighbours(x, y int) [][2]int {
 	return [][2]int{
 		{x, (y - 1 + GridSize) % GridSize},
 		{x, (y + 1) % GridSize},
@@ -157,8 +158,8 @@ func getNeighbours(x, y int) [][2]int {
 	}
 }
 
-// filter empty cells
-func filterEmptyCells(grid Grid, neighbours [][2]int) [][2]int {
+// Filter empty cells
+func FilterEmptyCells(grid Grid, neighbours [][2]int) [][2]int {
 	var emptyCells [][2]int
 	for _, n := range neighbours {
 		if grid[n[0]][n[1]] == nil {
@@ -168,8 +169,8 @@ func filterEmptyCells(grid Grid, neighbours [][2]int) [][2]int {
 	return emptyCells
 }
 
-// filter fish cells
-func filterFishCells(grid Grid, neighbours [][2]int) [][2]int {
+// Filter fish cells
+func FilterFishCells(grid Grid, neighbours [][2]int) [][2]int {
 	var fishCells [][2]int
 	for _, n := range neighbours {
 		if cell := grid[n[0]][n[1]]; cell != nil && cell.Type == Fish {
@@ -179,8 +180,8 @@ func filterFishCells(grid Grid, neighbours [][2]int) [][2]int {
 	return fishCells
 }
 
-// update simulation
-func updateSimulation(grid Grid, numThreads int) {
+// Update simulation
+func UpdateSimulation(grid Grid, numThreads int) {
 	newGrid := make(Grid, GridSize)
 	for i := range newGrid {
 		newGrid[i] = make([]*Entity, GridSize)
@@ -206,9 +207,9 @@ func updateSimulation(grid Grid, numThreads int) {
 					}
 
 					if cell.Type == Fish {
-						moveFish(grid, newGrid, x, y)
+						MoveFish(grid, newGrid, x, y)
 					} else if cell.Type == Shark {
-						moveShark(grid, newGrid, x, y)
+						MoveShark(grid, newGrid, x, y)
 					}
 				}
 			}
@@ -216,11 +217,11 @@ func updateSimulation(grid Grid, numThreads int) {
 	}
 
 	wg.Wait()
-	copyGrid(grid, newGrid)
+	CopyGrid(grid, newGrid)
 }
 
-// copy state
-func copyGrid(dest, src Grid) {
+// Copy state
+func CopyGrid(dest, src Grid) {
 	for i := range src {
 		for j := range src[i] {
 			dest[i][j] = src[i][j]
@@ -228,7 +229,7 @@ func copyGrid(dest, src Grid) {
 	}
 }
 
-// draw grid
+// Draw grid
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{0, 0, 0, 255})
 
@@ -253,7 +254,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 // Update the game state
 func (g *Game) Update() error {
-	updateSimulation(g.grid, g.numThreads)
+	UpdateSimulation(g.grid, g.numThreads)
 	return nil
 }
 
@@ -261,7 +262,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return ScreenWidth, ScreenHeight
 }
 
-func benchmarkSimulationToCSV(steps int, threadCounts []int, outputFile string) {
+func BenchmarkSimulationToCSV(steps int, threadCounts []int, outputFile string) {
 	file, err := os.Create(outputFile)
 	if err != nil {
 		panic(err)
@@ -277,11 +278,11 @@ func benchmarkSimulationToCSV(steps int, threadCounts []int, outputFile string) 
 	// Benchmark each thread count
 	baselineTime := 0.0
 	for i, numThreads := range threadCounts {
-		grid := initializeGrid()
+		grid := InitialiseGrid()
 		startTime := time.Now()
 
 		for step := 0; step < steps; step++ {
-			updateSimulation(grid, numThreads)
+			UpdateSimulation(grid, numThreads)
 		}
 
 		duration := time.Since(startTime).Seconds()
@@ -302,7 +303,8 @@ func benchmarkSimulationToCSV(steps int, threadCounts []int, outputFile string) 
 	fmt.Printf("Results saved to %s\n", outputFile)
 }
 
-func main() {
+// Main, to start simulation and benchmarking
+func Main() {
 	rand.Seed(time.Now().UnixNano())
 
 	threadCounts := []int{1, 2, 4, 8}     // Thread configurations to test
@@ -310,10 +312,10 @@ func main() {
 	outputFile := "benchmark_results.csv" // File to save results to
 
 	fmt.Println("Benchmarking Wator Simulation:")
-	benchmarkSimulationToCSV(steps, threadCounts, outputFile)
+	BenchmarkSimulationToCSV(steps, threadCounts, outputFile)
 
 	game := &Game{
-		grid:       initializeGrid(),
+		grid:       InitialiseGrid(),
 		numThreads: 1,
 	}
 
